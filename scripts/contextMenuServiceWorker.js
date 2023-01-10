@@ -1,9 +1,3 @@
-// Create a counter to keep track of the number of clicks
-let clickCounter = 0;
-
-// Specify the maximum number of clicks allowed
-const MAX_CLICKS = 2;
-
 const getKey = () => {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(['openai-key'], (result) => {
@@ -16,8 +10,8 @@ const getKey = () => {
 };
 
 const sendMessage = (content) => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tab) => {
-    const activeTab = tab[0].id;
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const activeTab = tabs[0].id;
 
     chrome.tabs.sendMessage(
       activeTab,
@@ -31,10 +25,12 @@ const sendMessage = (content) => {
   });
 };
 
-
 const generate = async (prompt) => {
+  console.log("before key")
   const key = await getKey();
+  console.log("after key")
   const url = 'https://api.openai.com/v1/completions';
+
 	
   const completionResponse = await fetch(url, {
     method: 'POST',
@@ -49,53 +45,45 @@ const generate = async (prompt) => {
       temperature: 0.7,
     }),
   });
+
+  console.log(completionResponse)
 	
   const completion = await completionResponse.json();
   return completion.choices.pop();
 }
 
-
-
 const generateCompletionAction = async (info) => {
 	try {
-      if (clickCounter >= MAX_CLICKS) {
-        //Send warning that they have reached max number of clicks
-        console.log("You have reached max number of clicks")
-        sendMessage("You have reached max number of clicks. Please upgrade to a higher tier")
-      }
-    else{
-            //Increment ClickCounter
-            clickCounter++;
-            console.log("Clicks total: ", clickCounter)
-            // Send mesage with generating text (this will be like a loading indicator)
-            sendMessage('generating...');
-    
-            const { selectionText } = info;
-            const basePromptPrefix =
-            `
-            Write me a detailed table of contents for an email with the topic below.
-      
-            Topic:
-            `;
-      
-            const baseCompletion = await generate(`${basePromptPrefix}${selectionText}`);
-        
-          const secondPrompt = 
-            `
-            Take the table of contents and topic of the email below and generate a full formal email. .
-      
-            Topic: ${selectionText}
-      
-            Table of Contents: ${baseCompletion.text}
-      
-            Email:
-            `;
-            
-            const secondPromptCompletion = await generate(secondPrompt);
-            
-          // Send the output when we're all done
-          sendMessage(secondPromptCompletion.text);
-    }
+		// Send mesage with generating text (this will be like a loading indicator)
+		sendMessage('generating...');
+    console.log("after generate")
+	
+    const { selectionText } = info;
+    const basePromptPrefix =
+		`
+		Write me a detailed table of contents for a youtube script with the title below.
+
+		Title:
+		`;
+
+    console.log("before baseCompletion")
+    const baseCompletion = await generate(`${basePromptPrefix}${selectionText}`);
+ 
+	const secondPrompt = 
+	  `
+	  Take the table of contents and title of the youtube video script below and generate a youtube script in the style of Mr Beast. Make it feel like a story. Don't just list the points. Go deep into each one. Explain why. Add in some call to actions whenever needed
+
+	  Title: ${selectionText}
+
+	  Table of Contents: ${baseCompletion.text}
+
+	  Blog Post:
+	  `;
+		
+    const secondPromptCompletion = await generate(secondPrompt);
+		
+	// Send the output when we're all done
+	sendMessage(secondPromptCompletion.text);
   } catch (error) {
     console.log(error);
 
@@ -106,7 +94,7 @@ const generateCompletionAction = async (info) => {
 
 chrome.contextMenus.create({
   id: 'context-run',
-  title: 'Generate Email',
+  title: 'Generate Youtube Script',
   contexts: ['selection'],
 });
 

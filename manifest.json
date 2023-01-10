@@ -1,7 +1,7 @@
 {
-  "name": "AI Email Writer",
-  "description": "Write up emails in no time!",
-  "version": "0.0.0.1",
+  "name": "Youtube Writer",
+  "description": "Write up blogs in no time!",
+  "version": "1.0",
   "manifest_version": 3,
   "icons": {
     "48": "assets/48.png",
@@ -16,7 +16,7 @@
   "background": {
     "service_worker": "scripts/contextMenuServiceWorker.js"
   },
-  "permissions": ["contextMenus", "activeTab", "storage"],
+  "permissions": ["contextMenus", "tabs", "storage"],
   "host_permissions": ["https://*/*"],
   "content_scripts" : [
     {
